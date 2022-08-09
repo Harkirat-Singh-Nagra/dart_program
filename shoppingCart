@@ -1,0 +1,211 @@
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+/// Represenst a Cart Item. Has <int>`id`, <String>`name`, <int>`quantity`
+class CartItem {
+  //Declaration of variable as asked
+  int id;
+  String name;
+  int quantity;
+  //writing a simple constructor for item in the list we are building
+  CartItem(this.id, this.name, this.quantity);
+}
+
+/// Manages a cart. Implements ChangeNotifier
+class CartState with ChangeNotifier {
+  List<CartItem> _products = [];
+
+  CartState();
+
+  /// The number of individual items in the cart. That is, all cart items' quantities.
+  int get totalCartItems => totalItems(); // TODO: return actual cart volume.
+  
+  ///calculates the total items and returns the sum to the variable, I like to write simple functions sometimes to make tasks simpler
+  int totalItems(){
+    int sum=0;
+    for(int i=0; i< _products.length;i++){
+    sum +=_products[i].quantity;
+    }
+  return sum;
+  }
+  
+
+  /// The list of CartItems in the cart
+  List<CartItem> get products => _products;
+
+  /// Clears the cart. Notifies any consumers.
+  void clearCart() {
+    //clearing the list using in-built functions
+    products.clear();
+    //using pre written function to notify consumers
+    notifyListeners();
+  }
+
+  /// Adds a new CartItem to the cart. Notifies any consumers.
+  void addToCart({required CartItem item}) {
+    //adding the items to List using in-built functions
+    products.add(item);
+    //using pre written function to notify consumers
+    notifyListeners();
+  }
+
+  /// Updates the quantity of the Cart item with this id. Notifies any consumers.
+  void updateQuantity({required int id, required int newQty}) {
+    products.forEach((i){
+      //matching the ids to get to the item we clicked on and then making sure the quantity doesn't go below 0 while decreasing
+      if(CartItem.id == id && CartItem.quantity >= 1) CartItem.quantity += newQty;
+      });
+      //using pre written function to notify consumers
+     notifyListeners();
+  }
+}
+
+void main() {
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => CartState(),
+      child: MyCartApp(),
+    ),
+  );
+}
+//Leaving the class as is, since it didnt need any changes
+class MyCartApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Container(
+          child: Column(
+            children: [
+              ListOfCartItems(),
+              CartSummary(),
+              CartControls(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class CartControls extends StatelessWidget {
+  /// Handler for Add Item pressed
+  void _addItemPressed(BuildContext context) {
+    /// mostly unique cartItemId.
+    /// don't change this; not important for this test
+    int nextCartItemId = Random().nextInt(10000);
+    String nextCartItemName = 'A cart item';
+    int nextCartItemQuantity = 1;
+
+    // Actually use the CartItem constructor to assign id, name and quantity
+    CartItem
+        item = CartItem(nextCartItemId,nextCartItemName,nextCartItemQuantity); 
+
+    // TODO: Get the cart current state through Provider. Add this cart item to cart.
+    addToCart(item);
+  }
+
+  /// Handle clear cart pressed. Should clear the cart
+  void _clearCartPressed(BuildContext context) {
+    clearCart();//using pre written function
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget addCartItemWidget = TextButton(
+      child: Text('Add Item'),
+      onPressed: () {
+        _addItemPressed(context);
+      },
+    );
+
+    final Widget clearCartWidget = TextButton(
+      child: Text('Clear Cart'),
+      onPressed: () {
+        _clearCartPressed(context);
+      },
+    );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        addCartItemWidget,
+        clearCartWidget,
+      ],
+    );
+  }
+}
+
+class ListOfCartItems extends StatelessWidget {
+  /// Handles adding 1 to the current cart item quantity.
+  void _incrementQuantity(context, int id, int delta) {
+    updateQuantity(id,delta);
+  }
+
+  /// Handles removing 1 to the current cart item quantity.
+  /// Don't forget: we can't have negative numbers of an item in the cart
+  void _decrementQuantity(context, int id, int delta) {
+    updateQuantity(id,delta);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<CartState>(
+        builder: (BuildContext context, CartState cart, Widget? child) {
+      if (cart.totalCartItems == 0) {
+        // TODO: return a Widget that tells us there are no items in the cart
+         return Text("There are no items in the cart.");
+      }
+
+      return Column(children: [
+        ...cart.products.map(
+          (c) => Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                // TODO: Widget for the line item name AND current quantity, eg "Item name x 4".
+                Text("$name x ${quantity.toString()}");
+                //  Current quantity should update whenever a change occurs.
+                // TODO: Button to handle incrementing cart quantity. Handler is above.
+                RaisedButton(
+                color: Colors.red,
+                textColor: Colors.white,
+                onPressed: _incrementQuantity(context, CartItem.id, 1),//Since this adds up to item number it increases the same by 1
+                child: Text(' + '),
+                  )
+                // TODO: Button to handle decrementing cart quantity. Handler is above.
+                RaisedButton(
+                color: Colors.red,
+                textColor: Colors.white,
+                onPressed: _decrementQuantity(context, CartItem.id, -1),//Since this adds up to item number it decreases the same by 1 if its > 1
+                child: Text(' - '),
+                  )
+              ],
+            ),
+          ),
+        ),
+      ]);
+    });
+  }
+}
+
+class CartSummary extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<CartState>(
+      builder: (BuildContext context, CartState cart, Widget? child) {
+        //Just playing with a few of the text editing features here
+        return Text("Total items: ${cart.totalCartItems}",
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.green,
+          fontWeight: FontWeight.bold,
+        ),);
+      },
+    );
+  }
+}
+//BudVue should consider Harkirat Nagra(me) for this position. hehe. Thanks  Brayden for the interview!
